@@ -1,0 +1,278 @@
+*&---------------------------------------------------------------------*
+*& Report  ZEJER_07_ANIMALES
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  zejer_07_animales.
+
+CONSTANTS: perro     TYPE string VALUE 'Perro',
+           gato      TYPE string VALUE 'Gato',
+           otro      TYPE string VALUE 'Animal erroneo',
+           vacunado  TYPE string VALUE 'Hemos vacunado un '.
+
+*----------------------------------------------------------------------*
+*       INTERFACE lif_tienda
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
+INTERFACE lif_tienda.
+
+  EVENTS: evento_sumar.
+
+  METHODS:  sumar_gatos  FOR EVENT evento_sumar OF lif_tienda,
+            sumar_perros FOR EVENT evento_sumar OF lif_tienda.
+
+
+ENDINTERFACE.                    "lif_tienda
+
+
+*----------------------------------------------------------------------*
+*       CLASS lc_animales DEFINITION
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
+CLASS lc_animales DEFINITION.
+
+  PUBLIC SECTION.
+
+    INTERFACES lif_tienda.
+
+    METHODS:  constructor IMPORTING  animal_valido  TYPE string
+                          RAISING zcx_animal_erroneo_07,
+              vacunar,
+              on_evento_sumar FOR EVENT evento_sumar  OF lif_tienda IMPORTING sender.
+
+    CLASS-METHODS vender IMPORTING venta TYPE i.
+
+    CLASS-DATA:
+              num_gatos    TYPE i,
+              num_perros   TYPE i.
+
+ENDCLASS.                    "lc_animales DEFINITION
+
+*----------------------------------------------------------------------*
+*       CLASS lc_animales IMPLEMENTATION
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
+CLASS lc_animales IMPLEMENTATION.
+
+  METHOD constructor.
+
+    DATA animal TYPE string.
+    animal = animal_valido.
+
+    "TRY.
+
+    IF animal = otro.
+*      RAISE EXCEPTION TYPE zcx_animal_erroneo_07. "---- esto no funciona ---
+      WRITE / otro.
+    ELSE.
+
+      CASE animal.
+        WHEN gato.
+
+          lif_tienda~sumar_gatos( ).
+
+        WHEN perro.
+
+          lif_tienda~sumar_perros( ).
+
+      ENDCASE.
+
+      SET HANDLER on_evento_sumar FOR ALL INSTANCES ACTIVATION 'X'.
+      RAISE EVENT lif_tienda~evento_sumar.
+      SET HANDLER on_evento_sumar FOR ALL INSTANCES ACTIVATION ''.
+
+    ENDIF.
+
+    "CATCH zcx_animal_erroneo_07 INTO gx_text.
+    "ENDTRY.
+
+  ENDMETHOD.                    "constructor
+
+  METHOD on_evento_sumar.
+    DATA total_animales TYPE i.
+
+    total_animales = num_gatos + num_perros.
+
+*    WRITE: /  'Total animales ', total_animales.
+*    SKIP.
+
+  ENDMETHOD.                    "on_evento_sumar
+
+  METHOD vacunar.
+
+  ENDMETHOD.                    "vacunar
+
+  METHOD vender.
+    DATA total_animales TYPE i.
+    total_animales = num_gatos + num_perros - 1.
+
+    WRITE: / 'Total animales ',
+              total_animales.
+    SKIP.
+  ENDMETHOD.                    "vender
+
+  METHOD lif_tienda~sumar_gatos.
+
+    num_gatos = num_gatos + 1.
+    WRITE: / 'Han traido un', gato.
+
+  ENDMETHOD.                    "lif_tienda~sumar_gatos
+
+  METHOD lif_tienda~sumar_perros.
+
+    num_perros = num_perros + 1.
+    WRITE: / 'Han traido un', perro.
+
+  ENDMETHOD.                    "lif_tienda~sumar_perros
+
+ENDCLASS.                    "lc_animales IMPLEMENTATION
+
+*----------------------------------------------------------------------*
+*       CLASS lcl_gatos DEFINITION
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
+CLASS lcl_gatos DEFINITION INHERITING FROM lc_animales.
+
+  PUBLIC SECTION.
+
+    METHODS:
+            constructor IMPORTING  animal_valido  TYPE string
+                        RAISING zcx_animal_erroneo_07,
+                vacunar REDEFINITION.
+
+
+ENDCLASS.                    "lcl_gatos DEFINITION
+
+*----------------------------------------------------------------------*
+*       CLASS lcl_gatos IMPLEMENTATION
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
+CLASS lcl_gatos IMPLEMENTATION.
+  METHOD constructor.
+
+    super->constructor( animal_valido = gato ).
+
+  ENDMETHOD.                    "constructor
+
+  METHOD vacunar.
+    WRITE: vacunado, gato.
+  ENDMETHOD.                    "vacunar
+
+ENDCLASS.                    "lcl_gatos IMPLEMENTATION
+
+*----------------------------------------------------------------------*
+*       CLASS lcl_perros DEFINITION
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
+CLASS lcl_perros DEFINITION INHERITING FROM lc_animales.
+  PUBLIC SECTION.
+
+    METHODS:
+          constructor IMPORTING  animal_valido  TYPE string
+                      RAISING zcx_animal_erroneo_07,
+              vacunar REDEFINITION,
+              pasear.
+
+
+ENDCLASS.                    "lcl_perros DEFINITION
+
+*----------------------------------------------------------------------*
+*       CLASS lcl_perros IMPLEMENTATION
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
+CLASS lcl_perros IMPLEMENTATION.
+
+  METHOD constructor.
+
+    super->constructor( animal_valido = perro ).
+
+  ENDMETHOD.                    "constructor
+
+  METHOD vacunar.
+    WRITE: vacunado, perro.
+  ENDMETHOD.                    "vacunar
+
+  METHOD pasear.
+
+    WRITE 'Perro paseando'.
+
+  ENDMETHOD.                    "pasear
+
+ENDCLASS.                    "lcl_perros IMPLEMENTATION
+
+* definicion de variables globales del programa
+
+DATA:
+      continuar    TYPE i,
+      obj_gato     TYPE REF TO lcl_gatos,
+      obj_perro    TYPE REF TO lcl_perros,
+      obj_otro     TYPE REF TO lc_animales, "---definido para excepcion
+      obj_animal   TYPE REF TO lc_animales. "---definido para el down cast
+
+
+DATA: gx_exc    TYPE REF TO zcx_animal_erroneo_07,
+      gx_text   TYPE string,
+      lv_total  TYPE i.
+
+DATA: ti_animal TYPE TABLE OF REF TO lc_animales.
+
+START-OF-SELECTION.
+
+  WHILE continuar <= 10.
+
+    CREATE OBJECT obj_gato
+      EXPORTING
+        animal_valido = gato.
+    APPEND obj_gato TO ti_animal.
+
+    CREATE OBJECT obj_perro
+      EXPORTING
+        animal_valido = perro.
+    APPEND obj_perro TO ti_animal.
+
+    CREATE OBJECT obj_otro
+      EXPORTING
+        animal_valido = otro.
+    APPEND obj_otro TO ti_animal.
+
+    continuar = continuar + 1.
+  ENDWHILE.
+
+********************** down cast *****************
+
+  LOOP AT ti_animal INTO obj_animal.
+
+    TRY.
+        obj_gato ?= obj_animal.
+
+      CATCH cx_sy_move_cast_error.
+        TRY.
+            obj_perro ?= obj_animal.
+          CATCH cx_sy_move_cast_error.
+            obj_gato->vacunar( ).
+            WRITE: / 'Animal en tienda',gato.
+            SKIP.
+        ENDTRY.
+        obj_perro->vacunar( ).
+        WRITE: / 'Animal en tienda',perro.
+        obj_perro->pasear( ).
+        SKIP.
+    ENDTRY.
+
+  ENDLOOP.
+
+  lv_total = obj_animal->num_gatos + obj_animal->num_perros.
+  WRITE: /'Total gatos  ',obj_animal->num_gatos.
+  WRITE: /'Total perros ',obj_animal->num_perros.
+
+  WRITE: /'Total animales ',lv_total.
