@@ -4,7 +4,7 @@
 *&---------------------------------------------------------------------*
 *&
 *&  EXAMEN TAW11 y TAW12 CURSO ABAP 15/379
-*&  BLAS  MONERRIS ALCARAZ
+*&  BLAYMO
 *&  REALIZADO EL: 01-03-2016
 *&---------------------------------------------------------------------*
 
@@ -134,7 +134,7 @@ ENDCLASS.                    "cl_animales IMPLEMENTATION
 *       CLASS cl_gatos DEFINITION
 *----------------------------------------------------------------------*
 *       OJO:
-*       HAY QUE CAMBIAR EL DISEÑO FUNCIONAL PARA AÑADIR DOS METODOS VENDER() A LAS
+*       HAY QUE CAMBIAR EL DISEÃ‘O FUNCIONAL PARA AÃ‘ADIR DOS METODOS VENDER() A LAS
 *       CLASES CL_GATOS CL_PERROS PARA PODER SABER EL TOTAL DE PERROS  Y GATOS VENDIDOS
 *        LO MISMO CON COMER()
 *----------------------------------------------------------------------*
@@ -191,7 +191,7 @@ ENDCLASS.                    "cl_gatos IMPLEMENTATION
 *       CLASS cl_perros DEFINITION
 *----------------------------------------------------------------------*
 *      OJO:
-*       HAY QUE CAMBIAR EL DISEÑO FUNCIONAL PARA AÑADIR DOS METODOS VENDER() A LAS
+*       HAY QUE CAMBIAR EL DISEÃ‘O FUNCIONAL PARA AÃ‘ADIR DOS METODOS VENDER() A LAS
 *       CLASES CL_GATOS CL_PERROS PARA PODER SABER EL TOTAL DE PERROS  Y GATOS VENDIDOS
 *       LO MISMO CON COMER()
 *----------------------------------------------------------------------*
