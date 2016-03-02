@@ -1,0 +1,336 @@
+*&---------------------------------------------------------------------*
+*& Report  ZEXAMEN_07_TAW12
+*&
+*&---------------------------------------------------------------------*
+*&
+*&  EXAMEN TAW11 y TAW12 CURSO ABAP 15/379
+*&  BLAS  MONERRIS ALCARAZ
+*&  REALIZADO EL: 01-03-2016
+*&---------------------------------------------------------------------*
+
+REPORT  zexamen_07_taw12.
+
+CONSTANTS: perro     TYPE string VALUE 'Perro',
+           gato      TYPE string VALUE 'Gato',
+           otro      TYPE string VALUE 'Animal erroneo',
+           correcto  TYPE string VALUE 'Animal correcto',
+           vacunado  TYPE string VALUE 'Vacunado ',
+           comiendo  TYPE string VALUE 'comiendo'.
+
+*----------------------------------------------------------------------*
+*       INTERFACE if_tienda
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
+INTERFACE if_tienda.
+
+  EVENTS: evento_sumar.
+
+  METHODS: sumar_gatos  FOR EVENT evento_sumar OF if_tienda,
+           sumar_perros FOR EVENT evento_sumar OF if_tienda.
+
+ENDINTERFACE.                    "if_tienda
+
+*----------------------------------------------------------------------*
+*       CLASS cl_animales DEFINITION
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
+CLASS cl_animales DEFINITION.
+
+  PUBLIC SECTION.
+
+    INTERFACES if_tienda.
+
+    METHODS:  constructor IMPORTING  animal_recibido  TYPE string
+                          RAISING zcx_tipo_animal_erroneo_07,
+              vacunar,
+              comer,
+              on_evento_sumar FOR EVENT evento_sumar  OF if_tienda IMPORTING sender.
+
+    CLASS-METHODS vender IMPORTING que_vendo TYPE i.
+
+    CLASS-DATA:
+              num_gatos    TYPE i,
+              num_perros   TYPE i.
+
+  PROTECTED SECTION.
+
+  PRIVATE SECTION.
+
+ENDCLASS.                    "cl_animales DEFINITION
+
+*----------------------------------------------------------------------*
+*       CLASS cl_animales IMPLEMENTATION
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
+CLASS cl_animales IMPLEMENTATION.
+
+  METHOD constructor.
+
+    DATA animal TYPE string.
+    animal = animal_recibido.
+
+    IF animal = otro.
+*      RAISE EXCEPTION TYPE zcx_tipo_animal_erroneo_07.  "----- no me funciona
+      WRITE: / otro, ' enviado a la protectora de animales'.
+    ELSE.
+      WRITE: / correcto,' recibido ',num_gatos,num_perros, animal.
+
+      CASE animal.
+        WHEN gato.
+
+          if_tienda~sumar_gatos( ).
+
+        WHEN perro.
+
+          if_tienda~sumar_perros( ).
+
+      ENDCASE.
+
+      SET HANDLER on_evento_sumar FOR ALL INSTANCES ACTIVATION 'X'.
+      RAISE EVENT if_tienda~evento_sumar.
+      SET HANDLER on_evento_sumar FOR ALL INSTANCES ACTIVATION ''.
+
+    ENDIF.
+
+  ENDMETHOD.                    "constructor
+
+  METHOD vender.
+  ENDMETHOD.                    "vender
+
+  METHOD vacunar.
+  ENDMETHOD.                    "vacunar
+
+  METHOD comer.
+  ENDMETHOD.                    "comer
+
+  METHOD on_evento_sumar.
+    DATA total_animales TYPE i.
+
+    total_animales = num_gatos + num_perros.
+
+    WRITE: / 'Total animales ', total_animales.
+    SKIP.
+
+  ENDMETHOD.                    "on_evento_sumar
+
+  METHOD if_tienda~sumar_gatos.
+
+    num_gatos = num_gatos + 1.
+
+  ENDMETHOD.                    "lif_tienda~sumar_gatos
+
+  METHOD if_tienda~sumar_perros.
+
+    num_perros = num_perros + 1.
+
+  ENDMETHOD.                    "lif_tienda~sumar_perros
+
+ENDCLASS.                    "cl_animales IMPLEMENTATION
+
+*----------------------------------------------------------------------*
+*       CLASS cl_gatos DEFINITION
+*----------------------------------------------------------------------*
+*       OJO:
+*       HAY QUE CAMBIAR EL DISEÑO FUNCIONAL PARA AÑADIR DOS METODOS VENDER() A LAS
+*       CLASES CL_GATOS CL_PERROS PARA PODER SABER EL TOTAL DE PERROS  Y GATOS VENDIDOS
+*        LO MISMO CON COMER()
+*----------------------------------------------------------------------*
+CLASS cl_gatos DEFINITION INHERITING FROM cl_animales.
+
+  PUBLIC SECTION.
+
+    METHODS:
+            constructor IMPORTING  animal_recibido  TYPE string
+                        RAISING zcx_animal_erroneo_07,
+                cambiar_arena,
+                vacunar REDEFINITION,
+                comer REDEFINITION,
+                vender_gato.
+
+  PROTECTED SECTION.
+*
+  PRIVATE SECTION.
+*
+ENDCLASS.                    "cl_gatos DEFINITION
+
+*----------------------------------------------------------------------*
+*       CLASS cl_gatos IMPLEMENTATION
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
+CLASS cl_gatos IMPLEMENTATION.
+
+  METHOD constructor.
+
+    super->constructor( animal_recibido = gato ).
+
+  ENDMETHOD.                    "constructor
+
+  METHOD cambiar_arena.
+    WRITE: /  gato,' cambiada arena'.
+  ENDMETHOD.                    "cambiar_arena
+
+  METHOD vacunar.
+    WRITE: / gato,' vacunado'.
+  ENDMETHOD.                    "vacunar
+
+  METHOD vender_gato.
+    num_gatos = num_gatos - 1.
+  ENDMETHOD.                    "vender_gato
+
+  METHOD comer.
+    WRITE: / gato,' comiendo'.
+  ENDMETHOD.                    "comer
+
+ENDCLASS.                    "cl_gatos IMPLEMENTATION
+
+*----------------------------------------------------------------------*
+*       CLASS cl_perros DEFINITION
+*----------------------------------------------------------------------*
+*      OJO:
+*       HAY QUE CAMBIAR EL DISEÑO FUNCIONAL PARA AÑADIR DOS METODOS VENDER() A LAS
+*       CLASES CL_GATOS CL_PERROS PARA PODER SABER EL TOTAL DE PERROS  Y GATOS VENDIDOS
+*       LO MISMO CON COMER()
+*----------------------------------------------------------------------*
+CLASS cl_perros DEFINITION INHERITING FROM cl_animales.
+
+  PUBLIC SECTION.
+
+    METHODS:
+            constructor IMPORTING  animal_recibido  TYPE string
+                        RAISING zcx_animal_erroneo_07,
+                pasear,
+                vacunar REDEFINITION,
+                comer REDEFINITION,
+                vender_perro.
+
+  PROTECTED SECTION.
+*
+  PRIVATE SECTION.
+*
+ENDCLASS.                    "cl_perros DEFINITION
+
+*----------------------------------------------------------------------*
+*       CLASS cl_perros IMPLEMENTATION
+*----------------------------------------------------------------------*
+*
+*----------------------------------------------------------------------*
+CLASS cl_perros IMPLEMENTATION.
+
+  METHOD constructor.
+
+    super->constructor( animal_recibido = perro ).
+
+  ENDMETHOD.                    "constructor
+
+  METHOD pasear.
+    WRITE: / perro,' paseando'.
+  ENDMETHOD.                    "cambiar_arena
+
+  METHOD vacunar.
+    WRITE: / perro,' vacunado'.
+  ENDMETHOD.                    "vacunar
+  METHOD vender_perro.
+    num_perros = num_perros - 1.
+  ENDMETHOD.                    "vender
+
+  METHOD comer.
+    WRITE: / perro,' comiendo'.
+  ENDMETHOD.                    "comer
+
+ENDCLASS.                    "cl_perros IMPLEMENTATION
+
+
+DATA:   gatos       TYPE i,
+        perros      TYPE i,
+        total       TYPE i,
+        vacunados   TYPE i,
+        paseados    TYPE i,
+        cambiarena  TYPE i,
+        comidos     TYPE i.
+
+
+DATA: lob_gato     TYPE REF TO cl_gatos,
+      lob_perro    TYPE REF TO cl_perros,
+      lob_otro     TYPE REF TO cl_animales, " definido para producir el error
+      lob_animal   TYPE REF TO cl_animales. " definido para Down Cast
+
+DATA: gx_exc    TYPE REF TO zcx_tipo_animal_erroneo_07,
+      gx_text   TYPE string.
+
+
+DATA: lt_animal TYPE TABLE OF REF TO cl_animales.
+
+******************** proceso de registro de los animales ***********
+** Up Cast
+START-OF-SELECTION.
+
+  DO 2 TIMES.
+
+    CREATE OBJECT lob_gato
+      EXPORTING
+        animal_recibido = gato.
+    gatos = gatos + 1.
+    APPEND lob_gato TO lt_animal.
+
+    CREATE OBJECT lob_perro
+      EXPORTING
+        animal_recibido = perro.
+    perros = perros + 1.
+    APPEND lob_perro TO lt_animal.
+
+    CREATE OBJECT lob_otro
+      EXPORTING
+        animal_recibido = otro.
+    APPEND lob_otro TO lt_animal.
+
+  ENDDO.
+
+**** proceso de vacunar, pasear, asear y vender los animales
+
+  LOOP AT lt_animal INTO lob_animal.
+
+    TRY.
+        lob_gato ?= lob_animal.
+
+      CATCH cx_sy_move_cast_error. " no funciona con zcx_tipo_animal_erroneo_07
+        vacunados = vacunados + 1.
+        comidos = comidos + 1.
+
+        TRY.
+            lob_perro ?= lob_animal.
+
+            paseados = paseados + 1.
+            lob_perro->vacunar( ).
+            lob_perro->pasear( ).
+            lob_perro->comer( ).
+            WRITE: / 'Animal en tienda',perro.
+
+          CATCH cx_sy_move_cast_error.
+            lob_gato->vacunar( ).
+            lob_gato->cambiar_arena( ).
+            lob_gato->comer( ).
+            cambiarena = cambiarena + 1.
+            WRITE: / 'Animal en tienda',gato.
+        ENDTRY.
+    ENDTRY.
+
+  ENDLOOP.
+
+lob_perro->vender_perro( ).
+lob_gato->vender_gato( ).
+
+
+********** resultados finales ***************
+total = lob_perro->num_perros + lob_gato->num_gatos.
+
+write: / 'Total animales ',total,
+       / 'Total gatos', lob_gato->num_gatos,
+       / 'Total perros ',lob_perro->num_perros,
+       / 'Total vacunados ', vacunados,
+       / 'Total paseados ', paseados,
+       / 'total comidos ', comidos,
+       / 'total vendidos ','2'.
